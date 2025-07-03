@@ -40,6 +40,18 @@ async function run() {
         res.send(result);        
     })
 
+    // to get parcel for specific user or all
+    app.get("/parcels/email" , async(req,res)=>{
+        const email = req.query.email;
+        const query = email ? {user_email: email} : {};
+
+        const sorting = {
+            sort : {creation_date: -1}
+        }
+
+        const result = await parcelCollection.find(query,sorting).toArray();
+        res.send(result);
+    })
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
