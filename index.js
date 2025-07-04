@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const express = require('express');
 const cors = require('cors');
 const port = process.env.PORT || 3000;
@@ -51,6 +51,15 @@ async function run() {
 
         const result = await parcelCollection.find(query,sorting).toArray();
         res.send(result);
+    });
+
+    // to delete a parcel
+    app.delete("/parcels/:id" , async(req,res)=>{
+      const id = req.params.id;
+
+      const result = await parcelCollection.deleteOne( { _id : new ObjectId(id) });
+      res.send(result); 
+
     })
 
     await client.db("admin").command({ ping: 1 });
