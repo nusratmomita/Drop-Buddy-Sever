@@ -30,8 +30,22 @@ async function run() {
   try {
    
     // creating a collection
+    const userCollection = client.db("DropBuddy").collection('users');
     const parcelCollection = client.db("DropBuddy").collection("parcels");
     const paymentCollection = client.db("DropBuddy").collection("payments");
+
+    app.post("/users", async (req, res) => {
+        const email = req.body.email;
+        const userExists = await userCollection.findOne({ email });
+
+        if (userExists) {
+            return res.status(200).send({ message: 'User already exists', inserted: false });
+        }
+
+        const userInfo = req.body;
+        const result = await userCollection.insertOne(userInfo);
+        res.send(result);
+    })
 
     // to show all the parcels
     app.get("/parcels" ,async(req,res)=>{
@@ -96,18 +110,15 @@ async function run() {
 
 
     app.get('/payments', async (req, res) => {
-            // try {
-                const userEmail = req.query.email;
+      console.log('access token from header', req.headers)
+      const userEmail = req.query.email;
 
-                const query = userEmail ? { user_email: userEmail } : {};
-                const options = { sort: { paid_at: -1 } }; // Latest first
+      const query = userEmail ? { email: userEmail } : {};
+      const options = { sort: { paid_at_string: -1 } }; // Latest first
 
-                const payments = await paymentCollection.find(query, options).toArray();
-                res.send(payments);
-            // } catch (error) {
-            //     console.error('Error fetching payment history:', error);
-            //     res.status(500).send({ message: 'Failed to get payments' });
-            // }
+      const payments = await paymentCollection.find(query, options).toArray();
+      res.send(payments);
+            
     });
 
     // POST: Record payment and update parcel status
@@ -124,11 +135,6 @@ async function run() {
                     }
                 }
             );
-
-            // if (updateResult.modifiedCount === 0) {
-            //     return res.status(404).send({ message: 'Parcel not found or already paid' });
-            // }
-
             // 2. Insert payment record
             const paymentDoc = {
                 parcelId,
@@ -145,11 +151,6 @@ async function run() {
                 message: 'Payment recorded and parcel marked as paid',
                 insertedId: paymentResult.insertedId,
             });
-
-        // } catch (error) {
-        //     console.error('Payment processing failed:', error);
-        //     res.status(500).send({ message: 'Failed to record payment' });
-        // }
     });
 
 
